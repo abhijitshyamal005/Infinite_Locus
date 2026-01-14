@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { getLocalStorageWithExpiry } from "../helpers/auth/auth.helper.js";
+import { API } from "../helpers/config.js";
 
 const AuthContext = createContext();
 
@@ -14,7 +15,7 @@ const AuthProvider = ({ children }) => {
     const data = getLocalStorageWithExpiry("auth");
     const fetchUser = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_APP_BACKEND_URL}/users/me`, {
+        const res = await fetch(`${API}/users/me`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

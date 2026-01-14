@@ -1,9 +1,23 @@
 import nodemailer from 'nodemailer';
-import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import {gmailContent} from './emailTemplate.js';
+import { gmailContent } from './emailTemplate.js';
 dotenv.config();
-const secret_key = process.env.JWT_SECRET;
+
+const normalizeBaseUrl = (url) => {
+    if (!url) return url;
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
+const getBackendApiBaseUrl = () => {
+    // Prefer explicit URL for emails (must be reachable from user's device)
+    // Example: https://your-domain.com/api/v1
+    const fromEnv = normalizeBaseUrl(process.env.BACKEND_URL);
+    if (fromEnv) return fromEnv;
+
+    // Safe local fallback for development
+    const port = process.env.PORT || 8080;
+    return `http://localhost:${port}/api/v1`;
+};
 
 
 
@@ -23,7 +37,8 @@ export const sendVerificationEmail = async (recipientEmail, verificationToken, u
 
         })
 
-        const emailcontent = gmailContent(verificationToken,username);
+        const backendUrl = getBackendApiBaseUrl();
+        const emailcontent = gmailContent(verificationToken, username, backendUrl);
 
         await transporter.sendMail({
             from: process.env.EMAIL,

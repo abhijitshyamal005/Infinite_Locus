@@ -44,8 +44,8 @@ const Register = () => {
     setLoading(true);
     const result = await register(userCreds).finally(() => setLoading(false));
     if (result.status === 201) {
-      toast.success(result.message);
-      navigate('/');
+      toast.success(result.message || 'Verification OTP has been sent to your email');
+      navigate('/verify-email', { state: { email: userCreds.email } });
     } else if (result.status === 400) {
       toast.warning(result.message);
     } else {

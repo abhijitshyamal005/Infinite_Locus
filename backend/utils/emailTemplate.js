@@ -1,6 +1,6 @@
 
 
-export const gmailContent = (verificationToken, username) => {
+export const gmailContent = (verificationCode, username) => {
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -61,8 +61,9 @@ export const gmailContent = (verificationToken, username) => {
         <p>Please take a moment to verify your email for RealTimeEdify, Edit in Real time</p>
         <div style="text-align: center; margin-top: 20px;">
           <h2>Hello ${username},</h2>
-          <p>Slacky300 appreciates your commitment to securing your account. To proceed, kindly click the button below to verify your email:</p>
-          <a href="${process.env.BACKEND_URL}/users/verifyemail/${verificationToken}" class="btn-verify">Verify Email</a>
+          <p>Slacky300 appreciates your commitment to securing your account.</p>
+          <p>Use the following One-Time Password (OTP) in the app to verify your email. This code is valid for 10 minutes:</p>
+          <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px; margin-top: 16px;">${verificationCode}</p>
         </div>
       </div>
     </body>
@@ -73,7 +74,7 @@ export const gmailContent = (verificationToken, username) => {
   }
 
   
-export const successFullVerification = (username) => {
+export const successFullVerification = (username, frontendUrl) => {
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -133,7 +134,7 @@ export const successFullVerification = (username) => {
         <p>You have successfully verified your email.</p>
         <div style="text-align: center; margin-top: 20px;">
           <p>You can now proceed to the home page by clicking the button below:</p>
-          <a href="${process.env.FRONTEND_URL}" class="btn-home">Go to Home Page</a>
+          <a href="${frontendUrl}" class="btn-home">Go to Home Page</a>
         </div>
       </div>
     </body>

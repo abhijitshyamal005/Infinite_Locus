@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Login from './pages/auth/Login';
 import PrivateRoutes from './helpers/routes/PrivateRoutes';
 import Register from './pages/auth/Register';
+import VerifyEmail from './pages/auth/VerifyEmail';
 import DocumentHome from './pages/main/DocumentHome';
 import EditDocument from './pages/main/EditDocument';
 
@@ -22,6 +23,7 @@ function App() {
         <Routes>
           <Route path='/' element={<Login />} />
           <Route path='/register' element={<Register />} />
+          <Route path='/verify-email' element={<VerifyEmail />} />
 
           <Route path='/' element={<PrivateRoutes />}>
             <Route path='/home' element={<DocumentHome/>} />

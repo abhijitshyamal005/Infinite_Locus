@@ -1,8 +1,8 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import {sendVerificationEmail, generateverificationToken} from "../utils/email.js"
-import {successFullVerification} from "../utils/emailTemplate.js"
+import { sendVerificationEmail } from "../utils/email.js";
+import { successFullVerification } from "../utils/emailTemplate.js";
 
 
 export const me = async (req, res) => {
@@ -22,11 +22,20 @@ export const register = async (req, res) => {
         if(existingUser) return res.status(400).json({message: `User with email ${email} already exists`});
         const doesUsernameExists = await User.findOne({username});
         if(doesUsernameExists) return res.status(400).json({message: `Username ${username} already exists`});
+
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
         const hashedPassword = await bcrypt.hash(password, 12);
-        const verificationToken = generateverificationToken(email);
-        await sendVerificationEmail(email.toLowerCase(), verificationToken, username);
-        const result = await User.create({email, password: hashedPassword, username, verificationToken});
-        res.status(201).json({user: result, message: `Verification email has been sent to ${email}`});
+        await sendVerificationEmail(email.toLowerCase(), verificationCode, username);
+        const result = await User.create({
+            email,
+            password: hashedPassword,
+            username,
+            verificationCode,
+            verificationCodeExpires
+        });
+        res.status(201).json({user: result, message: `Verification OTP has been sent to ${email}`});
     }catch(error){
         res.status(500).json({message: error.message});
     }
@@ -47,13 +56,56 @@ export const verifyemail = async (req, res) => {
         user.verificationToken = null;
         await user.save();
 
-        const congratulationContent = successFullVerification(user.username);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const congratulationContent = successFullVerification(user.username, frontendUrl);
 
         res.send(congratulationContent);
 
     } catch (error) {
         res.status(500).json({ error: 'An error occurred during email verification.' });
         console.log(error);
+    }
+};
+
+export const verifyOtp = async (req, res) => {
+    try {
+        const { email, code } = req.body;
+
+        if (!email || !code) {
+            return res.status(400).json({ message: 'Email and OTP code are required.' });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        if (user.isVerified) {
+            return res.status(200).json({ message: 'Email already verified.' });
+        }
+
+        if (!user.verificationCode || !user.verificationCodeExpires) {
+            return res.status(400).json({ message: 'No OTP found. Please request a new one.' });
+        }
+
+        if (user.verificationCode !== code) {
+            return res.status(400).json({ message: 'Invalid OTP code.' });
+        }
+
+        if (user.verificationCodeExpires < new Date()) {
+            return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
+        }
+
+        user.isVerified = true;
+        user.verificationCode = null;
+        user.verificationCodeExpires = null;
+        await user.save();
+
+        return res.status(200).json({ message: 'Email verified successfully.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred during OTP verification.' });
     }
 };
 

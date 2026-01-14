@@ -22,7 +22,7 @@ const Navbar = () => {
     <nav className={`navbar navbar-expand-lg ${darkMode ? 'bg-dark' : 'bg-light'}`}>
       <div className="container-fluid">
         <NavLink className={`navbar-brand ${darkMode ? 'text-light' : 'text-dark'}`} to="/">
-          RealTimeEdify
+          Group-1
         </NavLink>
         <button
           className="navbar-toggler"

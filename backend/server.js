@@ -7,6 +7,7 @@ import userRouter from './routes/user.routes.js';
 import documentRouter from './routes/document.routes.js';
 import dbConnect from './utils/dbConnect.js';
 import cors from 'cors';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,17 +15,34 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(express.json());
-app.use(cors());
+dotenv.config();
 
-app.use(express.static(path.join(__dirname, 'client', 'dist')));
+app.use(express.json());
+
+const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: corsOrigins,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  })
+);
 
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/documents', documentRouter);
 
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
-});
+// Serve the Vite build in production (single deploy)
+if (process.env.NODE_ENV === 'production') {
+  const clientDistPath = path.resolve(__dirname, '../frontend/dist');
+  app.use(express.static(clientDistPath));
+
+  app.get('/*', (req, res) => {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 const server = app.listen(PORT, async () => {
   await dbConnect();
@@ -34,8 +52,8 @@ const server = app.listen(PORT, async () => {
 const io = new Server(server, {
   pingTimeout: 60000,
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: corsOrigins,
+    methods: ['GET', 'POST'],
   },
 });
 
