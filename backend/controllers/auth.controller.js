@@ -27,7 +27,10 @@ export const register = async (req, res) => {
         const verificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         const hashedPassword = await bcrypt.hash(password, 12);
+
+        console.log('Sending verification email to:', email, 'with OTP:', verificationCode);
         await sendVerificationEmail(email.toLowerCase(), verificationCode, username);
+
         const result = await User.create({
             email,
             password: hashedPassword,
@@ -35,6 +38,8 @@ export const register = async (req, res) => {
             verificationCode,
             verificationCodeExpires
         });
+
+        console.log('User created successfully:', result._id);
         res.status(201).json({user: result, message: `Verification OTP has been sent to ${email}`});
     }catch(error){
         res.status(500).json({message: error.message});

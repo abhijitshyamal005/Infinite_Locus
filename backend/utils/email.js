@@ -1,55 +1,39 @@
-import nodemailer from 'nodemailer';
+import SibApiV3Sdk from 'sib-api-v3-sdk';
 import dotenv from 'dotenv';
 import { gmailContent } from './emailTemplate.js';
 dotenv.config();
 
-const normalizeBaseUrl = (url) => {
-    if (!url) return url;
-    return url.endsWith('/') ? url.slice(0, -1) : url;
-};
+// Configure Brevo API
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
+const apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
 
-const getBackendApiBaseUrl = () => {
-    // Prefer explicit URL for emails (must be reachable from user's device)
-    // Example: https://your-domain.com/api/v1
-    const fromEnv = normalizeBaseUrl(process.env.BACKEND_URL);
-    if (fromEnv) return fromEnv;
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-    // Safe local fallback for development
-    const port = process.env.PORT || 8080;
-    return `http://localhost:${port}/api/v1`;
-};
-
-
-
-export const generateverificationToken = (email) => {
-    return jwt.sign({ email: email }, secret_key, { expiresIn: '1d' })
-}
-
-
-export const sendVerificationEmail = async (recipientEmail, verificationToken, username) => {
+export const sendVerificationEmail = async (recipientEmail, verificationCode, username) => {
     try {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL,
-                pass: process.env.PASSWORD,
-            }
+        console.log('Sending OTP email to:', recipientEmail, 'Code:', verificationCode);
 
-        })
+        const emailContent = gmailContent(verificationCode, username);
 
-        const backendUrl = getBackendApiBaseUrl();
-        const emailcontent = gmailContent(verificationToken, username, backendUrl);
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
-        await transporter.sendMail({
-            from: process.env.EMAIL,
-            to: recipientEmail,
-            subject: 'Email Verification',
-            html: emailcontent
-        })
+        sendSmtpEmail.subject = 'Email Verification - Your OTP Code';
+        sendSmtpEmail.htmlContent = emailContent;
+        sendSmtpEmail.sender = {
+            name: 'Infinite Locus',
+            email: process.env.BREVO_FROM_EMAIL || 'noreply@yourdomain.com'
+        };
+        sendSmtpEmail.to = [{ email: recipientEmail }];
+        sendSmtpEmail.replyTo = {
+            email: process.env.BREVO_FROM_EMAIL || 'noreply@yourdomain.com'
+        };
 
-        console.log("Verification email has been sent");
+        const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        console.log('OTP email sent successfully via Brevo:', data);
 
     } catch (error) {
-        console.error('Error sending verification email:', error);
+        console.error('Error sending verification email via Brevo:', error);
+        throw error;
     }
 }
