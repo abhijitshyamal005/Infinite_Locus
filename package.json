@@ -5,8 +5,8 @@
   "scripts": {
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
-    "build:frontend": "cd frontend && npm ci && npm run build",
-    "build:backend": "cd backend && npm ci",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build:backend": "cd backend && npm install",
     "build": "npm run build:backend && npm run build:frontend",
     "start": "NODE_ENV=production npm --prefix backend run start",
     "postinstall": "npm run build"
