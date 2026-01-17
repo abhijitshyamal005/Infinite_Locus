@@ -55,7 +55,7 @@ export const login = async (user) => {
 export const register = async (user) => {
 
     try {
-
+        console.log('API URL:', `${API}/users/register`);
         const { username, email, password } = user;
 
         const res = await fetch(`${API}/users/register`, {
@@ -66,12 +66,16 @@ export const register = async (user) => {
             body: JSON.stringify({ username, email, password })
 
         });
+        console.log('Response status:', res.status);
         const data = await res.json();
+        console.log('Response data:', data);
+
         if (res.status === 201) {
             return { status: 201, message: data.message, email };
         }
-        return { status: 400, message: data.message };
+        return { status: res.status, message: data.message };
     } catch (error) {
+        console.error('Registration error:', error);
         return { status: 500, message: error.message };
     }
 }
